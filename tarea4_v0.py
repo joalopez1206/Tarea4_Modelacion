@@ -257,6 +257,7 @@ if __name__ == "__main__":
 
     dibujo = createStaticScene(texPipeline)
     car = createCarScene(lightPipeline)
+    autoCar = createCarScene(lightPipeline)
     
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
 
@@ -317,7 +318,8 @@ if __name__ == "__main__":
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
-        #TAREA4: Ojo aquí! Se configura la cámara y el dibujo en cada iteración. Esto es porque necesitamos que en cada iteración
+        #TAREA4: Ojo aquí! Se configura la cámara y el dibujo en cada iteración. 
+        # Esto es porque necesitamos que en cada iteración
         # las luces de los faros de los carros se actualicen en posición y dirección
         setView(texPipeline, axisPipeline, lightPipeline)
         setPlot(texPipeline, axisPipeline,lightPipeline)
@@ -338,7 +340,10 @@ if __name__ == "__main__":
         Auto = sg.findNode(car,'system-car')
         Auto.transform = tr.matmul([tr.translate(coord_X+2,-0.037409,coord_Z+5),tr.rotationY(np.pi+angulo),tr.rotationY(-np.pi),tr.translate(-2,0.037409,-5)])
         #transformación que hace que el auto se ponga en el origen, para luego trasladarlo al punto (2.0, −0.037409, 5.0) para despés poder moverlo.
-    
+        
+        #Ahora crearemos el auto 2
+        sg.drawSceneGraphNode(autoCar, lightPipeline, "model")
+        
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
 
