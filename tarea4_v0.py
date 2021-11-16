@@ -22,6 +22,38 @@ from operator import add
 
 __author__ = "Valentina Aguilar  - Ivan Sipiran"
 
+def y_rotation(vector,theta):
+    """Rotates 3-D vector around y-axis"""
+    R = np.array([[np.cos(theta),0,np.sin(theta)],[0,1,0],[-np.sin(theta), 0, np.cos(theta)]])
+    return np.dot(R,vector)
+#para obtener el array de la curva
+def generateT(t):
+    return np.array([[1, t, t**2, t**3]]).T
+
+
+def bezierMatrix(P0, P1, P2, P3):
+    
+    # Generate a matrix concatenating the columns
+    G = np.concatenate((P0, P1, P2, P3), axis=1)
+
+    # Bezier base matrix is a constant
+    Mb = np.array([[1, -3, 3, -1], [0, 3, -6, 3], [0, 0, 3, -3], [0, 0, 0, 1]])
+    
+    return np.matmul(G, Mb)
+
+# M is the cubic curve matrix, N is the number of samples between 0 and 1
+def evalCurve(M, N):
+    # The parameter t should move between 0 and 1
+    ts = np.linspace(0.0, 1.0, N)
+    
+    # The computed value in R3 for each sample will be stored here
+    curve = np.ndarray(shape=(N, 3), dtype=float)
+    
+    for i in range(len(ts)):
+        T = generateT(ts[i])
+        curve[i, 0:3] = np.matmul(M, T).T
+        
+    return curve
 
 # A class to store the application control
 class Controller:
@@ -70,8 +102,8 @@ def setLights():
     spot1.quadratic = 0.032
     spot1.position = np.array([2, 5, 0]) #TAREA4: esta ubicada en esta posición
     spot1.direction = np.array([0, -1, 0]) #TAREA4: está apuntando perpendicularmente hacia el terreno (Y-, o sea hacia abajo)
-    spot1.cutOff = np.cos(np.radians(12.5)) #TAREA4: corte del ángulo para la luz
-    spot1.outerCutOff = np.cos(np.radians(45)) #TAREA4: la apertura permitida de la luz es de 45°
+    spot1.cutOff = np.cos(np.radians(10.5)) #TAREA4: corte del ángulo para la luz
+    spot1.outerCutOff = np.cos(np.radians(35)) #TAREA4: la apertura permitida de la luz es de 45°
                                                 #mientras más alto es este ángulo, más se difumina su efecto
     
     spotlightsPool['spot1'] = spot1 #TAREA4: almacenamos la luz en el diccionario, con una clave única
@@ -88,7 +120,41 @@ def setLights():
     spot2.direction = np.array([0, -1, 0]) #TAREA4: también apunta hacia abajo
     spot2.cutOff = np.cos(np.radians(12.5))
     spot2.outerCutOff = np.cos(np.radians(15)) #TAREA4: Esta luz tiene menos apertura, por eso es más focalizada
+
+
     spotlightsPool['spot2'] = spot2 #TAREA4: almacenamos la luz en el diccionario
+
+    #TAREA4: Tercera luz spotlight
+    spot3 = Spotlight()
+    spot3.ambient = np.array([0.0, 0.0, 0.0])
+    spot3.diffuse = np.array([1.0, 1.0, 1.0])
+    spot3.specular = np.array([1.0, 1.0, 1.0])
+    spot3.constant = 1.0
+    spot3.linear = 0.09
+    spot3.quadratic = 0.032
+    spot3.position = np.array([controller.X-0.15, 0, controller.Z+0.1]) #TAREA4: Está ubicada en esta posición
+    spot3.direction = np.array([0, -0.7, -1]) #TAREA4: también apunta hacia abajo
+    spot3.cutOff = np.cos(np.radians(15.5))
+    spot3.outerCutOff = np.cos(np.radians(20)) #TAREA4: Esta luz tiene menos apertura, por eso es más focalizada
+
+
+    spotlightsPool['spot3'] = spot3 #TAREA4: almacenamos la luz en el diccionario
+
+    #TAREA4: Cuarta luz spotlight
+    spot4 = Spotlight()
+    spot4.ambient = np.array([0.0, 0.0, 0.0])
+    spot4.diffuse = np.array([1.0, 1.0, 1.0])
+    spot4.specular = np.array([1.0, 1.0, 1.0])
+    spot4.constant = 1.0
+    spot4.linear = 0.09
+    spot4.quadratic = 0.032
+    spot4.position = np.array([controller.X+0.15, 0.25, controller.Z+0.1]) #TAREA4: Está ubicada en esta posición
+    spot4.direction = np.array([0, -0.7, -1]) #TAREA4: también apunta hacia abajo
+    spot4.cutOff = np.cos(np.radians(15.5))
+    spot4.outerCutOff = np.cos(np.radians(20)) #TAREA4: Esta luz tiene menos apertura, por eso es más focalizada
+
+
+    spotlightsPool['spot4'] = spot4 #TAREA4: almacenamos la luz en el diccionario
 
 #TAREA4: modificamos esta función para poder configurar todas las luces del pool
 def setPlot(texPipeline, axisPipeline, lightPipeline):
@@ -264,11 +330,57 @@ if __name__ == "__main__":
     # glfw will swap buffers as soon as possible
     glfw.swap_interval(0)
 
+    #hagamos las curvas! (obtenido de ex_curve_demo.py)
+    #Estan hechas con curvas de bezier estimadas al ojimetro
+    #primera recta
+    N = 900
+    R0 = np.array([[2.0, controller.Y, 5.5]]).T
+    R1 = np.array([[2.0, controller.Y, -1]]).T
+    R2 = np.array([[2.0, controller.Y, 1]]).T
+    R3 = np.array([[2.0, controller.Y, -4.5]]).T
+    
+    M1 = bezierMatrix(R0, R1, R2, R3)
+    bezierCurve1 = evalCurve(M1, N)
+
+    
+    #primera circunferencia
+    R0 = np.array([[2.0, controller.Y, -4.5]]).T
+    R1 = np.array([[1.2, controller.Y, -8]]).T
+    R2 = np.array([[-2, controller.Y, -7]]).T
+    R3 = np.array([[-2.0, controller.Y, -4.5]]).T
+    
+    M2 = bezierMatrix(R0, R1, R2, R3)
+    bezierCurve2 = evalCurve(M2, N)
+
+    #segunda recta
+    R0 = np.array([[-2.0, controller.Y, -4.5]]).T
+    R1 = np.array([[-2.0, controller.Y, -1]]).T
+    R2 = np.array([[-2.0, controller.Y, 1]]).T
+    R3 = np.array([[-2.0, controller.Y, 5.5]]).T
+    
+    M3 = bezierMatrix(R0, R1, R2, R3)
+    bezierCurve3 = evalCurve(M3, N)
+
+    #segunda circunfereencia
+    R0 = np.array([[-2.0, controller.Y, 5.5]]).T
+    R1 = np.array([[-1.5, controller.Y, 8]]).T
+    R2 = np.array([[1, controller.Y, 8]]).T
+    R3 = np.array([[2.0, controller.Y, 5.5]]).T
+    
+    M4 = bezierMatrix(R0, R1, R2, R3)
+    bezierCurve4 = evalCurve(M4, N)
+
+    C = np.concatenate((bezierCurve1,bezierCurve2,bezierCurve3,bezierCurve4), axis=0)
+    print("la forma de la matriz de curvas es:",C.shape)
+
+    numeroCurvas=4
+    
     #parametro iniciales
     t0 = glfw.get_time()
     coord_X = 0 
     coord_Z = 0
     angulo = 0
+    step = 0
 
     while not glfw.window_should_close(window):
 
@@ -339,10 +451,37 @@ if __name__ == "__main__":
         sg.drawSceneGraphNode(car, lightPipeline, "model")
         Auto = sg.findNode(car,'system-car')
         Auto.transform = tr.matmul([tr.translate(coord_X+2,-0.037409,coord_Z+5),tr.rotationY(np.pi+angulo),tr.rotationY(-np.pi),tr.translate(-2,0.037409,-5)])
+        
+        #problema, nose como decirle que rote junto con el auto y no se me ocurre ... F
+        spotlightsPool['spot3'].position = np.array([coord_X+2-0.15, 0.25, coord_Z+5])
+        spotlightsPool['spot4'].position = np.array([coord_X+2+0.15, 0.25, coord_Z+5])
+        
+        #como le digo que rote con el auto entero y no con su eje ???
+        # hay que tener un vector de referencia y que siga ese vector
+        spotlightsPool['spot3'].direction = np.array([-np.sin(angulo),-0.4,-np.cos(angulo)])
+        spotlightsPool['spot4'].direction = spotlightsPool['spot3'].direction
         #transformación que hace que el auto se ponga en el origen, para luego trasladarlo al punto (2.0, −0.037409, 5.0) para despés poder moverlo.
         
         #Ahora crearemos el auto 2
+        #esto controla la animacion
+        if step > N*numeroCurvas-1:
+            step = 0
+
+        if step < N*numeroCurvas-1:
+            angle = np.arctan2(C[step+1,0]-C[step,0], C[step+1,2]-C[step,2])
+        else:
+            angle = np.arctan2(C[0,0]-C[step,0],C[0,2]-C[step,2])
+        
+        #dibujamos el otro auto
         sg.drawSceneGraphNode(autoCar, lightPipeline, "model")
+
+        #y lo transladamos
+        Auto2=sg.findNode(autoCar,'system-car')
+        Auto2.transform = tr.matmul([tr.translate(C[step,0],C[step,1],C[step,2]),
+                                                    tr.rotationY(-np.pi+angle),
+                                                    tr.translate(-2,0.037409,-5)])
+        
+        step += 1
         
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
